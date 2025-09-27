@@ -60,7 +60,7 @@ def hash_file(file_path: str) -> str:
         with open(file_path, 'rb') as f:
             return hashlib.md5(f.read()).hexdigest()
     except Exception as e:
-        logging.error(f"[ComfyUI-HotReloadHack] Error reading file {file_path}: {e}")
+        logging.error(f"[HotReloadHack] Error reading file {file_path}: {e}")
         return None
 
 def is_hidden_file_windows(file_path: str) -> bool:
@@ -77,7 +77,7 @@ def is_hidden_file_windows(file_path: str) -> bool:
             return False
         return attribute & 0x2 != 0  # FILE_ATTRIBUTE_HIDDEN is 0x2
     except Exception as e:
-        logging.error(f"[ComfyUI-HotReloadHack] Error checking if file is hidden on Windows: {e}")
+        logging.error(f"[HotReloadHack] Error checking if file is hidden on Windows: {e}")
         return False
 
 def is_hidden_file(file_path: str) -> bool:
@@ -171,7 +171,7 @@ class DebouncedHotReloader(FileSystemEventHandler):
                 for key in module.NODE_CLASS_MAPPINGS.keys():
                     RELOADED_CLASS_TYPES[key] = 3
             except Exception as e:
-                logging.error(f"[ComfyUI-HotReloadHack] Failed to reload module {module_name}: {e}")
+                logging.error(f"[HotReloadHack] Failed to reload module {module_name}: {e}")
                 return web.Response(text='FAILED')
 
             module_path: str = os.path.join(CUSTOM_NODE_ROOT[0], module_name)
@@ -209,7 +209,7 @@ class DebouncedHotReloader(FileSystemEventHandler):
 
         current_hash: str = hash_file(file_path)
         if current_hash == self.__hashes.get(file_path):
-            logging.debug(f"[ComfyUI-HotReloadHack] File {file_path} triggered event but content hasn't changed. Ignoring.")
+            logging.debug(f"[HotReloadHack] File {file_path} triggered event but content hasn't changed. Ignoring.")
             return
 
         self.__hashes[file_path] = current_hash
@@ -258,12 +258,12 @@ class DebouncedHotReloader(FileSystemEventHandler):
         try:
             asyncio.run(self.__reload(module_name))
             action = "deleted" if not os.path.exists(file_path) else "added" if file_path not in self.__hashes else "modified"
-            print(f'[ComfyUI-HotReloadHack] {file_path} \033[92m{action}!\033[0m')  # Green text
-            print(f'[ComfyUI-HotReloadHack] Reloaded module: {module_name}')
+            print(f'[HotReloadHack] {file_path} \033[92m{action}\033[0m')  # Green text
+            print(f'[HotReloadHack] Reloaded module: {module_name}')
         except requests.RequestException as e:
-            print(f'\033[91m[ComfyUI-HotReloadHack]\033[0m Reload failed: {e}')  # Red text
+            print(f'\033[91m[HotReloadHack]\033[0m Reload failed: {e}')  # Red text
         except Exception as e:
-            print(f'\033[91m[ComfyUI-HotReloadHack]\033[0m Error occurred: {e}')
+            print(f'\033[91m[HotReloadHack]\033[0m Error occurred: {e}')
 
 class HotReloaderService:
     """Service to manage the hot reloading of modules."""
@@ -333,9 +333,9 @@ def monkeypatch():
 
 def setup():
     """Sets up the hot reload system."""
-    logging.info("[ComfyUI-HotReloadHack] Monkey patching comfy_execution.caching.BasicCache")
+    logging.info("[HotReloadHack] Monkey patching comfy_execution.caching.BasicCache")
     monkeypatch()
-    logging.info("[ComfyUI-HotReloadHack] Starting Hot Reloader")
+    logging.info("[HotReloadHack] Starting Hot Reloader")
     hot_reloader_service = HotReloaderService(delay=DEBOUNCE_TIME)
     atexit.register(hot_reloader_service.stop)
     hot_reloader_service.start()
