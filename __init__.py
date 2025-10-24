@@ -25,6 +25,9 @@ from comfy_execution import caching
 # === GLOBALS ===
 # ==============================================================================
 
+# Global flag to disable hot reload functionality
+HOTRELOAD_DISABLED: bool = os.getenv("HOTRELOAD_DISABLED", "False").lower() == "true"
+
 RELOADED_CLASS_TYPES: dict = {}  # Stores types of classes that have been reloaded.
 CUSTOM_NODE_ROOT: list[str] = folder_paths.folder_names_and_paths["custom_nodes"][0]  # Custom Node root directory list.
 
@@ -236,8 +239,8 @@ class DebouncedHotReloader(FileSystemEventHandler):
                 self.__reload_timers[module_name].cancel()
 
             timer = threading.Timer(
-                self.__delay, 
-                self.check_and_reload, 
+                self.__delay,
+                self.check_and_reload,
                 args=[module_name, current_time, file_path]
             )
             self.__reload_timers[module_name] = timer
@@ -333,6 +336,10 @@ def monkeypatch():
 
 def setup():
     """Sets up the hot reload system."""
+    if HOTRELOAD_DISABLED:
+        print("\n\033[94m[HotReloadHack] Hot reload is disabled via HOTRELOAD_DISABLED environment variable\033[0m\n")
+        return
+
     logging.info("[HotReloadHack] Monkey patching comfy_execution.caching.BasicCache")
     monkeypatch()
     logging.info("[HotReloadHack] Starting Hot Reloader")
